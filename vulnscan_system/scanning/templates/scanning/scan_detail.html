@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block content %}
+<h1>Scan Report: {{ scan.target }}</h1><p>Status: {{ scan.status }}</p>
+<a class="button" href="/report/{{ scan.id }}/csv/">Export CSV</a>
+<section class="card"><h2>Findings</h2><table><tr><th>Finding</th><th>Severity</th><th>CVSS</th><th>Evidence</th><th>Recommendation</th></tr>
+{% for f in findings %}<tr><td>{{ f.title }}</td><td>{{ f.severity }}</td><td>{{ f.cvss }}</td><td>{{ f.evidence }}</td><td>{{ f.recommendation }}</td></tr>{% empty %}<tr><td colspan="5">No findings.</td></tr>{% endfor %}</table></section>
+{% endblock %}

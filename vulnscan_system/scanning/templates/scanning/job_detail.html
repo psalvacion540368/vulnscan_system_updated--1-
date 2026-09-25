@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Scan Job #{{ job.id }}{% endblock %}
+{% block content %}
+<h1>Scan Job #{{ job.id }} — {{ job.target.label }}</h1>
+
+<div id="scan-status-root"
+     data-job-id="{{ job.id }}"
+     data-status="{{ job.status }}"
+     data-status-url="{% url 'scanning:job_status' job.id %}"></div>
+
+{% if job.status == "QUEUED" or job.status == "RUNNING" %}
+<div id="live-banner" class="live-banner is-scanning">
+    <span class="led"></span>
+    <span id="live-status-badge">
+        {% if job.status == "QUEUED" %}Queued — waiting to start…{% else %}Scanning in progress…{% endif %}
+    </span>
+    <span class="hint">&middot; <span id="live-host-count">{{ hosts|length }}</span> host(s) found so far</span>
+</div>
+{% endif %}
+
+<div id="scan-progress-panel" class="scan-progress-panel{% if job.status == "QUEUED" or job.status == "RUNNING" %} is-active{% endif %}" data-progress="{{ scan_progress }}">
+    <div class="scan-progress-heading">
+        <span>Scan progress</span>
+        <strong id="scan-progress-value">{{ scan_progress }}%</strong>
+    </div>
+    <div class="scan-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ scan_progress }}">
+        <span id="scan-progress-bar" style="width: {{ scan_progress }}%"></span>
+    </div>
+    <p id="scan-progress-status" class="hint">
+        {% if job.status == "COMPLETED" %}Scan complete{% elif job.status == "FAILED" %}Scan stopped{% elif job.status == "QUEUED" %}Waiting to start{% else %}Scanning in progress{% endif %}
+    </p>
+</div>
+
+<p>
+    Status: <span class="status-badge status-{{ job.status|lower }}">{{ job.get_status_display }}</span>
+    &middot; Type: {{ job.get_scan_type_display }}
+    &middot; Queued: {{ job.queued_at|date:"Y-m-d H:i:s" }}
+    {% if job.finished_at %}&middot; Finished: {{ job.finished_at|date:"Y-m-d H:i:s" }}{% endif %}
+</p>
+{% if job.status == "COMPLETED" %}
+<div class="severity-summary" aria-label="Finding severity summary">
+    <div class="severity-summary-item severity-critical"><strong>{{ severity_counts.CRITICAL }}</strong><span>Critical</span></div>
+    <div class="severity-summary-item severity-high"><strong>{{ severity_counts.HIGH }}</strong><span>High</span></div>
+    <div class="severity-summary-item severity-medium"><strong>{{ severity_counts.MEDIUM }}</strong><span>Medium</span></div>
+    <div class="severity-summary-item severity-low"><strong>{{ severity_counts.LOW }}</strong><span>Low</span></div>
+    <div class="severity-summary-item severity-info"><strong>{{ severity_counts.INFO }}</strong><span>Info</span></div>
+</div>
+<div class="card">
+    <h2>Attacker-risk assessment: {{ job.attacker_risk_score }}% ({{ job.attacker_risk_label }})</h2>
+    <p class="hint">This percentage is a triage signal, not proof that a person is a hacker.</p>
+    {% if job.attacker_risk_reasons %}
+        <ul>{% for reason in job.attacker_risk_reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+    {% else %}
+        <p>No suspicious transaction or network indicators were observed.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% if job.error_message %}<p class="field-error">{{ job.error_message }}</p>{% endif %}
+
+{% if job.status == "COMPLETED" and user.can_generate_reports %}
+<p>
+    <a href="{% url 'reporting:generate_report' job.id 'pdf' %}" class="btn-primary">Generate PDF report</a>
+    <a href="{% url 'reporting:generate_report' job.id 'csv' %}" class="btn-primary">Generate CSV report</a>
+</p>
+{% endif %}
+
+{% if job.status == "COMPLETED" %}
+<p>
+    {% if previous_job %}
+        <a href="{% url 'scanning:job_compare' job.id %}" class="btn-primary">Compare with previous scan (#{{ previous_job.id }})</a>
+    {% else %}
+        <span class="hint">No earlier completed scan of this target to compare against yet.</span>
+    {% endif %}
+    <a href="{% url 'scanning:target_trend' job.target.id %}" class="btn-primary">View trend for this target</a>
+</p>
+{% endif %}
+
+{% for host in hosts %}
+    <div class="card">
+        <h3>{{ host.ip_address }} {% if host.hostname %}({{ host.hostname }}){% endif %}</h3>
+        {% if host.os_family %}<p>OS guess: {{ host.os_family }} ({{ host.os_accuracy }}% confidence)</p>{% endif %}
+        {% if host.ports.all %}
+        <table class="data-table">
+            <thead><tr><th>Port</th><th>Proto</th><th>Service</th><th>Product</th><th>Version</th></tr></thead>
+            <tbody>
+            {% for port in host.ports.all %}
+                <tr>
+                    <td>{{ port.port_number }}</td>
+                    <td>{{ port.protocol }}</td>
+                    <td>{{ port.service_name }}</td>
+                    <td>{{ port.product }}</td>
+                    <td>{{ port.version }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>{{ host.raw_probe_notes }}</p>
+        {% endif %}
+    </div>
+{% empty %}
+    <p>No hosts discovered yet{% if job.status == "RUNNING" %} — scan in progress, updating live above{% endif %}.</p>
+{% endfor %}
+{% endblock %}

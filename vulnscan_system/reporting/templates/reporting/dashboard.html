@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+    <h1>Security Dashboard</h1>
+    <a href="{% url 'reporting:analytics' %}" class="btn-primary">View analytics &rarr;</a>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card overall-risk risk-{{ overall_label|lower }}">
+        <span class="stat-label">Overall Risk Rating</span>
+        <span class="stat-value">{{ overall_label }}</span>
+        <span class="stat-sub">Top score: {{ overall_score }}/10</span>
+    </div>
+    {% for label, count in severity_counts.items %}
+    <div class="stat-card severity-{{ label|lower }}">
+        <span class="stat-label">{{ label }}</span>
+        <span class="stat-value" data-count-to="{{ count }}">0</span>
+    </div>
+    {% endfor %}
+    <div class="stat-card">
+        <span class="stat-label">Total Findings</span>
+        <span class="stat-value" data-count-to="{{ total_findings }}">0</span>
+    </div>
+</div>
+
+<div class="two-col">
+    <div class="card">
+        <h2>Severity distribution</h2>
+        {% if severity_chart_json == '{"labels": [], "data": [], "colors": []}' %}
+            <p class="empty-note">No findings recorded yet.</p>
+        {% else %}
+            <div class="chart-wrap chart-wrap-donut"><canvas id="dashSeverityChart"></canvas></div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Top findings by risk score</h2>
+        {% if top_risk_chart_json == '{"labels": [], "data": [], "colors": []}' %}
+            <p class="empty-note">No findings recorded yet.</p>
+        {% else %}
+            <div class="chart-wrap chart-wrap-hbar"><canvas id="dashTopRiskChart"></canvas></div>
+        {% endif %}
+    </div>
+</div>
+
+<section class="card assessment-guide">
+    <div>
+        <p class="eyebrow">Risk assessment system</p>
+        <h2>How findings are classified</h2>
+        <p class="hint">Ratings are calculated from CVSS scores and verified service/configuration findings from completed scans.</p>
+    </div>
+    <div class="assessment-levels">
+        <div><span class="severity-badge severity-critical">Critical</span><p>Immediate compromise or severe impact risk.</p></div>
+        <div><span class="severity-badge severity-high">High</span><p>Major exposure requiring urgent remediation.</p></div>
+        <div><span class="severity-badge severity-medium">Medium</span><p>Meaningful weakness needing planned remediation.</p></div>
+        <div><span class="severity-badge severity-low">Low</span><p>Limited impact or lower exploitability.</p></div>
+        <div><span class="severity-badge severity-info">Informational</span><p>Context or visibility finding without direct risk.</p></div>
+    </div>
+</section>
+
+<div class="two-col">
+    <div class="card">
+        <h2>Recent scan jobs</h2>
+        <table class="data-table">
+            <thead><tr><th>Target</th><th>Status</th><th>Queued</th></tr></thead>
+            <tbody>
+            {% for job in recent_jobs %}
+                <tr>
+                    <td>
+                        {% if user.can_run_scans %}
+                            <a href="{% url 'scanning:job_detail' job.id %}">{{ job.target.label }}</a>
+                        {% else %}
+                            {{ job.target.label }}
+                        {% endif %}
+                    </td>
+                    <td><span class="status-badge status-{{ job.status|lower }}">{{ job.get_status_display }}</span></td>
+                    <td>{{ job.queued_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3">No scans yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Highest-risk findings</h2>
+        <table class="data-table">
+            <thead><tr><th>Severity</th><th>Risk</th><th>Title</th><th>Host</th></tr></thead>
+            <tbody>
+            {% for f in top_findings %}
+                <tr>
+                    <td><span class="severity-badge severity-{{ f.severity|lower }}">{{ f.get_severity_display }}</span></td>
+                    <td>{{ f.risk_score }}</td>
+                    <td>
+                        {% if user.can_analyze_vulnerabilities %}
+                            <a href="{% url 'vulnassess:finding_detail' f.id %}">{{ f.title }}</a>
+                        {% else %}
+                            {{ f.title }}
+                        {% endif %}
+                    </td>
+                    <td>{{ f.open_port.host.ip_address }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No findings recorded yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% comment %} <div class="card">
+    <h2>Mitigation guide</h2>
+    <p>General guidance while remediating findings above:</p>
+    <ul>
+        <li><strong>Critical/High:</strong> patch or disable the affected service immediately; treat as a priority incident if internet-facing.</li>
+        <li><strong>Medium:</strong> schedule remediation in the current sprint/patch cycle.</li>
+        <li><strong>Low/Informational:</strong> track for the next maintenance window.</li>
+    </ul>
+</div> {% endcomment %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    if (typeof Chart === "undefined") return;
+
+    const styles = getComputedStyle(document.documentElement);
+    const cssVar = (name) => styles.getPropertyValue(name).trim();
+    const textDim = cssVar("--text-dim") || "#7488a1";
+    const gridLine = cssVar("--panel-border") || "#1e2939";
+    const fontFamily = "IBM Plex Mono, ui-monospace, monospace";
+
+    Chart.defaults.color = textDim;
+    Chart.defaults.font.family = fontFamily;
+    Chart.defaults.font.size = 11;
+
+    const severityData = JSON.parse('{{ severity_chart_json|escapejs }}');
+    const topRiskData = JSON.parse('{{ top_risk_chart_json|escapejs }}');
+
+    if (severityData.labels.length) {
+        new Chart(document.getElementById("dashSeverityChart"), {
+            type: "doughnut",
+            data: {
+                labels: severityData.labels,
+                datasets: [{
+                    data: severityData.data,
+                    backgroundColor: severityData.colors,
+                    borderColor: cssVar("--panel-solid") || "#111a28",
+                    borderWidth: 2,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: "bottom", labels: { boxWidth: 10, padding: 14 } } },
+                cutout: "62%",
+            },
+        });
+    }
+
+    if (topRiskData.labels.length) {
+        new Chart(document.getElementById("dashTopRiskChart"), {
+            type: "bar",
+            data: {
+                labels: topRiskData.labels,
+                datasets: [{
+                    label: "Risk score",
+                    data: topRiskData.data,
+                    backgroundColor: topRiskData.colors,
+                    borderRadius: 3,
+                }],
+            },
+            options: {
+                indexAxis: "y",
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: gridLine }, beginAtZero: true, ticks: { precision: 0 } },
+                    y: { grid: { display: false } },
+                },
+            },
+        });
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}System Logs{% endblock %}
+{% block content %}
+<h1>System-Wide Audit Logs</h1>
+<form method="get" class="filter-form">
+    <select name="action" onchange="this.form.submit()">
+        <option value="">All actions</option>
+        {% for value, label in actions %}
+            <option value="{{ value }}" {% if value == current_filter %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</form>
+<table class="data-table">
+    <thead><tr><th>Time</th><th>User</th><th>Action</th><th>IP</th><th>Detail</th></tr></thead>
+    <tbody>
+    {% for entry in page_obj %}
+        <tr>
+            <td>{{ entry.timestamp }}</td>
+            <td>{{ entry.user.username|default:"—" }}</td>
+            <td>{{ entry.get_action_display }}</td>
+            <td>{{ entry.ip_address|default:"—" }}</td>
+            <td>{{ entry.detail }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Prev</a>{% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+</div>
+{% endblock %}

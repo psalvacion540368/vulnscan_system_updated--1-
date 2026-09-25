@@ -1,0 +1,102 @@
+[
+  {
+    "cve_id": "CVE-2021-41773",
+    "product_match": "apache httpd",
+    "version_pattern": "2.4.49",
+    "description": "Path traversal and file disclosure vulnerability in Apache HTTP Server 2.4.49.",
+    "cvss_score": 7.5,
+    "severity": "HIGH",
+    "remediation": "Upgrade Apache HTTP Server to 2.4.51 or later; ensure require all denied is set on cgi-bin.",
+    "published_date": "2021-10-05"
+  },
+  {
+    "cve_id": "CVE-2021-44228",
+    "product_match": "log4j",
+    "version_pattern": "<2.17.0",
+    "description": "Log4Shell: remote code execution via JNDI lookup in Apache Log4j2.",
+    "cvss_score": 10.0,
+    "severity": "CRITICAL",
+    "remediation": "Upgrade Log4j to 2.17.1+ or remove the JndiLookup class; restrict outbound LDAP/RMI traffic.",
+    "published_date": "2021-12-10"
+  },
+  {
+    "cve_id": "CVE-2020-1938",
+    "product_match": "apache tomcat",
+    "version_pattern": "<9.0.31",
+    "description": "Ghostcat: AJP connector file read/inclusion vulnerability in Apache Tomcat.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "remediation": "Upgrade Tomcat to a patched version or disable the AJP connector if unused.",
+    "published_date": "2020-02-20"
+  },
+  {
+    "cve_id": "CVE-2019-0708",
+    "product_match": "microsoft-ds",
+    "version_pattern": "",
+    "description": "BlueKeep: RDP remote code execution vulnerability (pre-auth) in older Windows versions.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "remediation": "Apply MS19 patches; disable RDP if not required; enable Network Level Authentication.",
+    "published_date": "2019-05-14"
+  },
+  {
+    "cve_id": "CVE-2018-15473",
+    "product_match": "openssh",
+    "version_pattern": "<7.7",
+    "description": "OpenSSH user enumeration vulnerability via crafted authentication requests.",
+    "cvss_score": 5.3,
+    "severity": "MEDIUM",
+    "remediation": "Upgrade OpenSSH to 7.8 or later.",
+    "published_date": "2018-08-17"
+  },
+  {
+    "cve_id": "CVE-2017-0144",
+    "product_match": "microsoft-ds",
+    "version_pattern": "",
+    "description": "EternalBlue: SMBv1 remote code execution vulnerability exploited by WannaCry.",
+    "cvss_score": 8.1,
+    "severity": "CRITICAL",
+    "remediation": "Disable SMBv1; apply MS17-010; upgrade to SMBv2/3.",
+    "published_date": "2017-03-14"
+  },
+  {
+    "cve_id": "CVE-2014-0160",
+    "product_match": "openssl",
+    "version_pattern": "1.0.1",
+    "description": "Heartbleed: OpenSSL heartbeat extension buffer over-read exposing process memory.",
+    "cvss_score": 7.5,
+    "severity": "HIGH",
+    "remediation": "Upgrade OpenSSL to 1.0.1g or later; reissue TLS certificates and rotate secrets.",
+    "published_date": "2014-04-07"
+  },
+  {
+    "cve_id": "CVE-2021-3156",
+    "product_match": "sudo",
+    "version_pattern": "<1.9.5p2",
+    "description": "Baron Samedit: heap overflow in sudo allowing local privilege escalation to root.",
+    "cvss_score": 7.8,
+    "severity": "HIGH",
+    "remediation": "Upgrade sudo to 1.9.5p2 or later.",
+    "published_date": "2021-01-26"
+  },
+  {
+    "cve_id": "CVE-2011-3192",
+    "product_match": "apache httpd",
+    "version_pattern": "<2.2.20",
+    "description": "Apache Range header denial-of-service vulnerability (Apache Killer).",
+    "cvss_score": 7.8,
+    "severity": "HIGH",
+    "remediation": "Upgrade Apache to 2.2.20+ or limit the Range header via mod_headers.",
+    "published_date": "2011-08-24"
+  },
+  {
+    "cve_id": "CVE-2020-11651",
+    "product_match": "saltstack",
+    "version_pattern": "<3000.2",
+    "description": "SaltStack authentication bypass allowing unauthenticated remote command execution.",
+    "cvss_score": 9.8,
+    "severity": "CRITICAL",
+    "remediation": "Upgrade Salt to 3000.2/2019.2.4 or later; restrict access to the Salt master ports.",
+    "published_date": "2020-04-30"
+  }
+]

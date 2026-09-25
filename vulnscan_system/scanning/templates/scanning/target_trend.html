@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Trend — {{ target.label }}{% endblock %}
+{% block content %}
+<h1>Historical trend — {{ target.label }} ({{ target.ip_or_cidr }})</h1>
+
+{% if rows %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Scan</th><th>Date</th>
+            <th>Critical</th><th>High</th><th>Medium</th><th>Low</th><th>Info</th><th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for row in rows %}
+        <tr>
+            <td><a href="{% url 'scanning:job_detail' row.job.id %}">#{{ row.job.id }}</a></td>
+            <td>{{ row.job.finished_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ row.counts.CRITICAL }}</td>
+            <td>{{ row.counts.HIGH }}</td>
+            <td>{{ row.counts.MEDIUM }}</td>
+            <td>{{ row.counts.LOW }}</td>
+            <td>{{ row.counts.INFO }}</td>
+            <td><strong>{{ row.total }}</strong></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<p class="hint">Read top to bottom, oldest scan first — watch whether Critical/High counts are trending up or down over time.</p>
+{% else %}
+    <p>No completed scans yet for this target.</p>
+{% endif %}
+{% endblock %}

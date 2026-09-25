@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Add Target{% endblock %}
+{% block content %}
+<h1>Add scan target</h1>
+<form method="post" class="card">
+    {% csrf_token %}
+    {% for field in form %}
+        <label>{{ field.label }} {{ field }}
+            {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </label>
+    {% endfor %}
+    <div class="wifi-actions">
+        <button type="button" id="detect-wifi" class="btn-secondary">Detect connected Wi-Fi</button>
+        <button type="button" id="use-wifi-ip" class="btn-secondary" disabled>Use detected IP</button>
+        <button type="button" id="use-wifi-cidr" class="btn-secondary" disabled>Use detected CIDR</button>
+    </div>
+    <p id="wifi-result" class="hint">Detecting the connected Wi-Fi name...</p>
+    <p class="hint">Targets must fall within this deployment's authorized scanning scope:
+        IP/CIDR targets are checked against <code>SCAN_ALLOWED_CIDRS</code> before they can be scanned.</p>
+    <button type="submit" class="btn-primary">Add target</button>
+</form>
+<script>
+    async function detectWifiTarget() {
+        const result = document.getElementById("wifi-result");
+        const useIp = document.getElementById("use-wifi-ip");
+        const useCidr = document.getElementById("use-wifi-cidr");
+        result.textContent = "Detecting connected Wi-Fi...";
+        try {
+            const response = await fetch("{% url 'scanning:wifi_targets' %}", {
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            });
+            if (!response.ok) throw new Error("Wi-Fi detection request failed");
+            const data = await response.json();
+            const target = data.targets && data.targets[0];
+            if (!target) {
+                result.textContent = "No connected Wi-Fi adapter was detected. Enter an authorized IP or CIDR manually.";
+                return;
+            }
+            document.getElementById("id_label").value = `${target.ssid}`;
+            // A detected Wi-Fi connection defaults to this computer's IP.
+            document.getElementById("id_ip_or_cidr").value = target.ip_address;
+            useIp.disabled = false;
+            useCidr.disabled = false;
+            useIp.dataset.value = target.ip_address;
+            useCidr.dataset.value = target.cidr;
+            result.textContent = `Connected Wi-Fi: ${target.ssid}`;
+        } catch (error) {
+            result.textContent = "Wi-Fi detection failed. Enter an authorized IP or CIDR manually.";
+        }
+    }
+    document.getElementById("detect-wifi").addEventListener("click", detectWifiTarget);
+    document.getElementById("use-wifi-ip").addEventListener("click", function () {
+        document.getElementById("id_ip_or_cidr").value = this.dataset.value;
+    });
+    document.getElementById("use-wifi-cidr").addEventListener("click", function () {
+        document.getElementById("id_ip_or_cidr").value = this.dataset.value;
+    });
+    detectWifiTarget();
+</script>
+{% endblock %}

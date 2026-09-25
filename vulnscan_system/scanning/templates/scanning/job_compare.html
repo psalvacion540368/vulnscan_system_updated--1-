@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Compare Scan #{{ old_job.id }} vs #{{ new_job.id }}{% endblock %}
+{% block content %}
+<h1>Comparing scans for {{ new_job.target.label }}</h1>
+<p>
+    Baseline: <strong>Scan #{{ old_job.id }}</strong> ({{ old_job.finished_at|date:"Y-m-d H:i" }})
+    &rarr; Current: <strong>Scan #{{ new_job.id }}</strong> ({{ new_job.finished_at|date:"Y-m-d H:i" }})
+</p>
+
+{% if other_jobs %}
+<form method="get" class="filter-form">
+    <label style="display:inline;">Compare against:
+        <select name="against" onchange="this.form.submit()">
+            {% for j in other_jobs %}
+                <option value="{{ j.id }}" {% if j.id == old_job.id %}selected{% endif %}>
+                    Scan #{{ j.id }} ({{ j.finished_at|date:"Y-m-d H:i" }})
+                </option>
+            {% endfor %}
+        </select>
+    </label>
+</form>
+{% endif %}
+
+<div class="stat-grid">
+    <div class="stat-card severity-critical">
+        <span class="stat-label">New findings</span>
+        <span class="stat-value">{{ result.new_findings|length }}</span>
+    </div>
+    <div class="stat-card severity-low">
+        <span class="stat-label">Resolved findings</span>
+        <span class="stat-value">{{ result.resolved_findings|length }}</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Unchanged findings</span>
+        <span class="stat-value">{{ result.unchanged_findings|length }}</span>
+    </div>
+</div>
+
+<div class="card">
+    <h2>🔴 New since scan #{{ old_job.id }}</h2>
+    {% if result.new_findings %}
+    <table class="data-table">
+        <thead><tr><th>Severity</th><th>Risk</th><th>Title</th><th>Host</th><th>Port</th></tr></thead>
+        <tbody>
+        {% for f in result.new_findings %}
+            <tr>
+                <td><span class="severity-badge severity-{{ f.severity|lower }}">{{ f.get_severity_display }}</span></td>
+                <td>{{ f.risk_score }}</td>
+                <td>{{ f.title }}</td>
+                <td>{{ f.open_port.host.ip_address }}</td>
+                <td>{{ f.open_port.port_number }}/{{ f.open_port.protocol }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No new findings — nothing newly detected since the baseline scan.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>🟢 Resolved since scan #{{ old_job.id }}</h2>
+    {% if result.resolved_findings %}
+    <table class="data-table">
+        <thead><tr><th>Severity</th><th>Risk</th><th>Title</th><th>Host</th><th>Port</th></tr></thead>
+        <tbody>
+        {% for f in result.resolved_findings %}
+            <tr>
+                <td><span class="severity-badge severity-{{ f.severity|lower }}">{{ f.get_severity_display }}</span></td>
+                <td>{{ f.risk_score }}</td>
+                <td>{{ f.title }}</td>
+                <td>{{ f.open_port.host.ip_address }}</td>
+                <td>{{ f.open_port.port_number }}/{{ f.open_port.protocol }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No findings resolved between these two scans.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>⚪ Unchanged ({{ result.unchanged_findings|length }})</h2>
+    <details>
+        <summary>Show unchanged findings</summary>
+        <table class="data-table">
+            <thead><tr><th>Severity</th><th>Risk</th><th>Title</th><th>Host</th><th>Port</th></tr></thead>
+            <tbody>
+            {% for f in result.unchanged_findings %}
+                <tr>
+                    <td><span class="severity-badge severity-{{ f.severity|lower }}">{{ f.get_severity_display }}</span></td>
+                    <td>{{ f.risk_score }}</td>
+                    <td>{{ f.title }}</td>
+                    <td>{{ f.open_port.host.ip_address }}</td>
+                    <td>{{ f.open_port.port_number }}/{{ f.open_port.protocol }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </details>
+</div>
+{% endblock %}

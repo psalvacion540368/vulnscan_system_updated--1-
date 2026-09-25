@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-heading">
+    <h1>Analytics</h1>
+    <div class="range-toggle" role="group" aria-label="Time range">
+        <a href="?days=7" class="range-btn {% if days == 7 %}is-active{% endif %}">7d</a>
+        <a href="?days=30" class="range-btn {% if days == 30 %}is-active{% endif %}">30d</a>
+        <a href="?days=90" class="range-btn {% if days == 90 %}is-active{% endif %}">90d</a>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card overall-risk risk-{{ overall_label|lower }}">
+        <span class="stat-label">Overall Risk Rating</span>
+        <span class="stat-value">{{ overall_label }}</span>
+        <span class="stat-sub">Top score: {{ overall_score }}/10</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Avg Risk Score</span>
+        <span class="stat-value" data-count-to="{{ avg_risk }}">0</span>
+        <span class="stat-sub">across all findings</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Total Findings</span>
+        <span class="stat-value" data-count-to="{{ total_findings }}">0</span>
+        <span class="stat-sub">{{ acknowledged }} acknowledged &middot; {{ unacknowledged }} open</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Scans (last {{ days }}d)</span>
+        <span class="stat-value" data-count-to="{{ scans_in_range }}">0</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Hosts Scanned</span>
+        <span class="stat-value" data-count-to="{{ total_hosts }}">0</span>
+    </div>
+</div>
+
+<div class="two-col">
+    <div class="card">
+        <h2>Severity distribution</h2>
+        {% if severity_chart_json == '{"labels": [], "data": [], "colors": []}' %}
+            <p class="empty-note">No findings recorded yet.</p>
+        {% else %}
+            <div class="chart-wrap chart-wrap-donut"><canvas id="severityChart"></canvas></div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Scan job outcomes</h2>
+        {% if status_chart_json == '{"labels": [], "data": [], "colors": []}' %}
+            <p class="empty-note">No scan jobs yet.</p>
+        {% else %}
+            <div class="chart-wrap chart-wrap-donut"><canvas id="statusChart"></canvas></div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <h2>Findings detected — last {{ days }} days</h2>
+    <div class="chart-wrap chart-wrap-line"><canvas id="trendChart"></canvas></div>
+</div>
+
+<div class="two-col">
+    <div class="card">
+        <h2>Riskiest hosts</h2>
+        {% if top_hosts_chart_json == '{"labels": [], "data": []}' %}
+            <p class="empty-note">No findings recorded yet.</p>
+        {% else %}
+            <div class="chart-wrap chart-wrap-hbar"><canvas id="hostsChart"></canvas></div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Most frequent CVEs</h2>
+        <table class="data-table">
+            <thead><tr><th>CVE ID</th><th>Occurrences</th></tr></thead>
+            <tbody>
+            {% for cve_id, count in top_cves %}
+                <tr><td>{{ cve_id }}</td><td>{{ count }}</td></tr>
+            {% empty %}
+                <tr><td colspan="2">No CVE matches recorded yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    if (typeof Chart === "undefined") return;
+
+    const styles = getComputedStyle(document.documentElement);
+    const cssVar = (name) => styles.getPropertyValue(name).trim();
+    const textDim = cssVar("--text-dim") || "#7488a1";
+    const gridLine = cssVar("--panel-border") || "#1e2939";
+    const fontFamily = "IBM Plex Mono, ui-monospace, monospace";
+
+    Chart.defaults.color = textDim;
+    Chart.defaults.font.family = fontFamily;
+    Chart.defaults.font.size = 11;
+
+    const severityData = JSON.parse('{{ severity_chart_json|escapejs }}');
+    const statusData = JSON.parse('{{ status_chart_json|escapejs }}');
+    const trendData = JSON.parse('{{ findings_trend_chart_json|escapejs }}');
+    const hostsData = JSON.parse('{{ top_hosts_chart_json|escapejs }}');
+
+    const donutOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: "bottom", labels: { boxWidth: 10, padding: 14 } } },
+        cutout: "62%",
+    };
+
+    if (severityData.labels.length) {
+        new Chart(document.getElementById("severityChart"), {
+            type: "doughnut",
+            data: {
+                labels: severityData.labels,
+                datasets: [{
+                    data: severityData.data,
+                    backgroundColor: severityData.colors,
+                    borderColor: cssVar("--panel-solid") || "#111a28",
+                    borderWidth: 2,
+                }],
+            },
+            options: donutOptions,
+        });
+    }
+
+    if (statusData.labels.length) {
+        new Chart(document.getElementById("statusChart"), {
+            type: "doughnut",
+            data: {
+                labels: statusData.labels,
+                datasets: [{
+                    data: statusData.data,
+                    backgroundColor: statusData.colors,
+                    borderColor: cssVar("--panel-solid") || "#111a28",
+                    borderWidth: 2,
+                }],
+            },
+            options: donutOptions,
+        });
+    }
+
+    new Chart(document.getElementById("trendChart"), {
+        type: "line",
+        data: {
+            labels: trendData.labels,
+            datasets: [{
+                label: "Findings detected",
+                data: trendData.data,
+                borderColor: cssVar("--signal") || "#1fe0c4",
+                backgroundColor: "rgba(31, 224, 196, 0.12)",
+                pointRadius: 2,
+                pointBackgroundColor: cssVar("--signal") || "#1fe0c4",
+                tension: 0.3,
+                fill: true,
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: gridLine }, ticks: { maxTicksLimit: 8 } },
+                y: { grid: { color: gridLine }, beginAtZero: true, ticks: { precision: 0 } },
+            },
+        },
+    });
+
+    if (hostsData.labels.length) {
+        new Chart(document.getElementById("hostsChart"), {
+            type: "bar",
+            data: {
+                labels: hostsData.labels,
+                datasets: [{
+                    label: "Findings",
+                    data: hostsData.data,
+                    backgroundColor: cssVar("--signal") || "#1fe0c4",
+                    borderRadius: 3,
+                }],
+            },
+            options: {
+                indexAxis: "y",
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: gridLine }, beginAtZero: true, ticks: { precision: 0 } },
+                    y: { grid: { display: false } },
+                },
+            },
+        });
+    }
+})();
+</script>
+{% endblock %}

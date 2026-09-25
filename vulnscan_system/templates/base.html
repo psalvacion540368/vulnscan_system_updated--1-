@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}VulnScan{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% if request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'register' %}auth-page{% endif %}">
+{% if request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'register' %}
+<aside class="sidebar">
+    <a class="brand" href="{% if user.is_authenticated %}{% url 'reporting:dashboard' %}{% else %}#{% endif %}">
+        <img src="{% static 'images/logo1.png' %}" alt="VulnScan logo">
+        <span>VulnScan</span>
+        <span class="role-badge role-{{ user.role|lower }}">{{ user.get_role_display }}</span>
+
+    </a>
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
+    <nav>
+        {% if user.is_authenticated %}
+            <a href="{% url 'reporting:dashboard' %}">Dashboard</a>
+            <a href="{% url 'reporting:analytics' %}">Analytics</a>
+            {% if user.can_run_scans %}
+                <a href="{% url 'scanning:job_list' %}">Scans</a>
+            {% endif %}
+            {% if user.can_analyze_vulnerabilities %}
+                <a href="{% url 'vulnassess:findings_list' %}">Findings</a>
+            {% endif %}
+            <a href="{% url 'reporting:report_list' %}">Reports</a>
+            {% if user.can_manage_accounts %}
+                <a href="{% url 'accounts:account_management' %}">Accounts</a>
+                <a href="{% url 'accounts:system_logs' %}">System Logs</a>
+            {% endif %}
+            <form action="{% url 'accounts:logout' %}" method="post" class="inline-form">
+                {% csrf_token %}
+                <button type="submit" class="link-button logout-trigger">Logout ({{ user.username }})</button>
+            </form>
+        {% else %}
+            {% comment %} <a href="{% url 'accounts:login' %}">Login</a> {% endcomment %}
+            {% comment %} <a href="{% url 'accounts:register' %}">Register</a> {% endcomment %}
+        {% endif %}
+    </nav>
+</aside>
+{% endif %}
+
+<main class="content">
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="message {{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+</main>
+
+<div id="toast-container"></div>
+{% if user.is_authenticated %}
+<div id="logout-transition" class="logout-transition" aria-hidden="true">
+    <div class="logout-scanline"></div>
+    <div class="logout-particles" aria-hidden="true"></div>
+    <img src="{% static 'images/logo1.png' %}" alt="" class="logout-logo">
+    <strong class="logout-status">SECURE SESSION TERMINATED</strong>
+</div>
+{% endif %}
+
+<!-- 1. Include Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- 2. Application Scripts -->
+<script src="{% static 'js/app.js' %}" defer></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

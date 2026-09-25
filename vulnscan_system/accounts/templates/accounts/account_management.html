@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Account Management{% endblock %}
+{% block content %}
+<h1>Account Management</h1>
+<table class="data-table">
+    <thead>
+        <tr><th>Username</th><th>Email</th><th>Role</th><th>Active</th><th>Last login IP</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for u in users %}
+        <tr>
+            <td>{{ u.username }}</td>
+            <td>{{ u.email }}</td>
+            <td><span class="role-badge role-{{ u.role|lower }}">{{ u.get_role_display }}</span></td>
+            <td>{{ u.is_active|yesno:"Yes,No" }}</td>
+            <td>{{ u.last_login_ip|default:"—" }}</td>
+            <td><a href="{% url 'accounts:edit_user' u.id %}">Edit</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

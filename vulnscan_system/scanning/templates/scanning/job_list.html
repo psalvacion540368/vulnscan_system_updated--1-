@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Scan Jobs{% endblock %}
+{% block content %}
+<h1>Network Scanning</h1>
+
+<div class="two-col">
+    <div class="card">
+        <h2>Launch a scan</h2>
+        <form method="post" action="{% url 'scanning:launch_scan' %}">
+            {% csrf_token %}
+            <label>Target
+                <select name="target" required>
+                    {% for t in targets %}
+                        <option value="{{ t.id }}">{{ t.label }} ({{ t.ip_or_cidr }})</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Scan type
+                <select name="scan_type" id="scan_type_select" onchange="updateNmapArgs()">
+                    <option value="DISCOVERY">Host discovery (IP/CIDR only)</option>
+                    <option value="PORT_SCAN">Port &amp; service scan</option>
+                    <option value="FULL" selected>Full scan</option>
+                </select>
+            </label>
+            <label>Nmap arguments
+                <input type="text" name="nmap_arguments" id="nmap_args_input" value="-sV -O --top-ports 100">
+            </label>
+            <script>
+                function updateNmapArgs() {
+                    const type = document.getElementById('scan_type_select').value;
+                    const input = document.getElementById('nmap_args_input');
+                    const defaults = {
+                        DISCOVERY: '-sn',
+                        PORT_SCAN: '-sV --top-ports 100',
+                        FULL: '-sV -O --top-ports 100',
+                    };
+                    input.value = defaults[type] || input.value;
+                }
+            </script>
+            <button type="submit" class="btn-primary">Launch scan</button>
+        </form>
+        <p><a href="{% url 'scanning:add_target' %}">+ Add a new target</a></p>
+    </div>
+
+    <div class="card">
+        <h2>Recent jobs</h2>
+        <table class="data-table">
+            <thead><tr><th>ID</th><th>Target</th><th>Type</th><th>Status</th><th>Queued</th></tr></thead>
+            <tbody>
+            {% for job in jobs %}
+                <tr>
+                    <td><a href="{% url 'scanning:job_detail' job.id %}">#{{ job.id }}</a></td>
+                    <td>{{ job.target.label }}</td>
+                    <td>{{ job.get_scan_type_display }}</td>
+                    <td><span class="status-badge status-{{ job.status|lower }}">{{ job.get_status_display }}</span></td>
+                    <td>{{ job.queued_at }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">No scans yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

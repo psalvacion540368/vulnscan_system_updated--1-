@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ target.username }}{% endblock %}
+{% block content %}
+<h1>Edit {{ target.username }}</h1>
+<form method="post" class="card">
+    {% csrf_token %}
+    {% for field in form %}
+        <label>{{ field.label }} {{ field }}</label>
+    {% endfor %}
+    <button type="submit" class="btn-primary">Save</button>
+    <a href="{% url 'accounts:account_management' %}">Cancel</a>
+</form>
+{% endblock %}

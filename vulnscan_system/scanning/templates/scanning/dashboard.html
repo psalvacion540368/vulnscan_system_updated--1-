@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block content %}
+<h1>Security Dashboard</h1><a class="button" href="/scan/">Start Authorized Scan</a>
+<section class="card"><h2>Scan History</h2><table><tr><th>Target</th><th>Depth</th><th>Status</th><th>Date</th></tr>
+{% for scan in scans %}<tr><td><a href="/scan/{{ scan.id }}/">{{ scan.target }}</a></td><td>{{ scan.depth }}</td><td>{{ scan.status }}</td><td>{{ scan.created_at }}</td></tr>{% empty %}<tr><td colspan="4">No scans yet.</td></tr>{% endfor %}</table></section>
+{% endblock %}

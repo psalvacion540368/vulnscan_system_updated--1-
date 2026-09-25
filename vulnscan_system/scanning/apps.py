@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class ScanningConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "scanning"
+    verbose_name = "Network Scanning & Packet Execution Engine"

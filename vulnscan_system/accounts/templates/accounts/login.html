@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Login - VulnScan{% endblock %}
+{% block content %}
+<div class="login-stage">
+<div class="auth-signal" aria-hidden="true"></div>
+<div class="auth-loader" aria-hidden="true">
+    <div class="auth-loader-ring"></div>
+    <div class="auth-loader-bar"><span></span></div>
+    <strong>Initializing secure access...</strong>
+</div>
+<div class="card auth-card">
+    {% load static %}
+    <img class="top-card-logo" src="{% static 'images/logo1.png' %}" alt="VulnScan logo">
+    <p class="auth-kicker">VulnAssess // secure access</p>
+    <h1 class="auth-title">Sign in</h1>
+    <p class="auth-subtitle">Automated Vulnerability Scanning and Risk Assessment System</p>
+    <form method="post" data-auth-form>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <label>Username {{ form.username }}</label>
+        <label>Password {{ form.password }}</label>
+        <button type="submit" class="btn-primary">Login</button>
+    </form>
+    <p>No account? <a class="auth-transition" href="{% url 'accounts:register' %}">Register</a></p>
+</div>
+</div>
+{% endblock %}

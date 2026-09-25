@@ -1,0 +1,9 @@
+Django>=5.0,<5.1
+mysqlclient>=2.2.0        # MySQL driver for Django ORM (preferred)
+PyMySQL>=1.1.0            # Fallback MySQL driver if mysqlclient fails to build
+python-dotenv>=1.0.0      # Loads .env into environment variables automatically
+python-nmap>=0.7.1        # Nmap wrapper: port/service/OS identification
+scapy>=2.5.0              # Raw packet crafting: discovery probes
+reportlab>=4.0.0          # PDF report generation
+requests>=2.31.0          # Optional: live NVD API sync
+gunicorn>=21.2.0           # Production WSGI server

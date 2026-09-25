@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ finding.title }}{% endblock %}
+{% block content %}
+<h1>{{ finding.title }}</h1>
+<p>
+    <span class="severity-badge severity-{{ finding.severity|lower }}">{{ finding.get_severity_display }}</span>
+    &middot; Risk score: <strong>{{ finding.risk_score }}</strong>/10
+    &middot; Host: {{ finding.open_port.host.ip_address }}:{{ finding.open_port.port_number }}/{{ finding.open_port.protocol }}
+</p>
+{% if finding.cve %}<p>Reference: <strong>{{ finding.cve.cve_id }}</strong> (CVSS {{ finding.cve.cvss_score }})</p>{% endif %}
+
+<div class="card">
+    <h3>Description</h3>
+    <p>{{ finding.description }}</p>
+</div>
+
+<div class="card">
+    <h3>Recommended remediation</h3>
+    <p>{{ finding.remediation }}</p>
+</div>
+{% endblock %}

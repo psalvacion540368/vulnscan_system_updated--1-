@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Register - VulnScan{% endblock %}
+{% block content %}
+<div class="login-stage">
+    <div class="auth-signal" aria-hidden="true"></div>
+    <div class="auth-loader" aria-hidden="true">
+        <div class="auth-loader-ring"></div>
+        <div class="auth-loader-bar"><span></span></div>
+        <strong>Initializing secure access...</strong>
+    </div>
+    <div class="card auth-card">
+    {% load static %}
+    <img class="top-card-logo" src="{% static 'images/logo1.png' %}" alt="VulnScan logo">
+    <p class="auth-kicker">VulnAssess // create operator profile</p>
+    <h1 class="auth-title">Create account</h1>
+    <p class="auth-subtitle">Join the vulnerability scanning and risk assessment system</p>
+    <p class="hint">New accounts start as <strong>Viewer</strong>. An Admin can grant Analyst/Admin access afterward.</p>
+    <form method="post" data-auth-form>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            <label>{{ field.label }} {{ field }}
+                {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+            </label>
+        {% endfor %}
+        <button type="submit" class="btn-primary">Register</button>
+        <p>Have an account? <a class="auth-transition" href="{% url 'accounts:login' %}">Login</a></p>
+    </form>
+    </div>
+</div>
+{% endblock %}

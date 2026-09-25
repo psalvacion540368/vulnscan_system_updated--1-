@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Set Up Two-Factor Authentication - VulnScan{% endblock %}
+{% block content %}
+<div class="card auth-card">
+    <h1>Set up Two-Factor Authentication</h1>
+    <p class="hint">
+        SMS and email codes can be intercepted (SIM-swap, mailbox
+        compromise). An authenticator app doesn't have that weakness --
+        scan the QR code below with Google Authenticator, Authy, or any
+        other TOTP app, then confirm with the 6-digit code it shows you.
+    </p>
+
+    <div class="two-col">
+        <div>
+            <img src="{{ qr_data_uri }}" alt="TOTP enrollment QR code" style="max-width:220px;">
+        </div>
+        <div>
+            <p><strong>Can't scan a QR code?</strong> Enter this key manually:</p>
+            <code>{{ secret }}</code>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <label>{{ form.code.label }} {{ form.code }}
+            {% for error in form.code.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </label>
+        <button type="submit" class="btn-primary">Confirm and enable</button>
+    </form>
+
+    {% if user.mfa_enabled %}
+    <form method="post" action="{% url 'accounts:mfa_disable' %}" class="inline-form" style="margin-top:1rem;">
+        {% csrf_token %}
+        <button type="submit" class="link-button">Turn off two-factor authentication</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Two-Factor Verification - VulnScan{% endblock %}
+{% block content %}
+<div class="card auth-card">
+    <h1>Two-factor verification</h1>
+    <p class="hint">
+        Enter the 6-digit code from your authenticator app, or one of your
+        backup codes if your device isn't available.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <label>{{ form.code.label }} {{ form.code }}
+            {% for error in form.code.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        </label>
+        <button type="submit" class="btn-primary">Verify</button>
+    </form>
+</div>
+{% endblock %}
