@@ -2,7 +2,7 @@ asgiref==3.12.1
 certifi==2026.7.22
 charset-normalizer==3.5.2
 Django==5.0.14
-whitenoise==8.3.0
+whitenoise
 gunicorn==26.2.0
 idna==3.20
 mysqlclient==2.3.0
