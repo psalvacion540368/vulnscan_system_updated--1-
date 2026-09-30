@@ -164,6 +164,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Scanning engine
 SCAN_MAX_CONCURRENT_JOBS = int(os.environ.get("SCAN_MAX_CONCURRENT_JOBS", 2))
 SCAN_DEFAULT_TIMEOUT_SECONDS = int(os.environ.get("SCAN_DEFAULT_TIMEOUT_SECONDS", 600))
+SCAN_MAX_TARGET_ADDRESSES = max(1, int(os.environ.get("SCAN_MAX_TARGET_ADDRESSES", 256)))
 # Only these networks may be scanned -- authorization guardrail, edit for your environment.
 SCAN_ALLOWED_CIDRS = os.environ.get("SCAN_ALLOWED_CIDRS", "").split(",") if os.environ.get("SCAN_ALLOWED_CIDRS") else []
 # Only these hostnames/domains (and their subdomains) may be scanned as web targets.

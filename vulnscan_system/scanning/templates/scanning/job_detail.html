@@ -20,13 +20,13 @@
 
 <div id="scan-progress-panel" class="scan-progress-panel{% if job.status == "QUEUED" or job.status == "RUNNING" %} is-active{% endif %}" data-progress="{{ scan_progress }}">
     <div class="scan-progress-heading">
-        <span>Scan progress</span>
+        <span>Network scan progress</span>
         <strong id="scan-progress-value">{{ scan_progress }}%</strong>
     </div>
-    <div class="scan-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ scan_progress }}">
-        <span id="scan-progress-bar" style="width: {{ scan_progress }}%"></span>
+    <div class="scan-progress-track" role="progressbar" aria-label="Network scan progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ scan_progress }}" aria-valuetext="{{ scan_progress }} percent complete">
+        <span id="scan-progress-bar" style="width: {{ scan_progress }}%" aria-hidden="true"></span>
     </div>
-    <p id="scan-progress-status" class="hint">
+    <p id="scan-progress-status" class="hint scan-progress-status" role="status" aria-live="polite">
         {% if job.status == "COMPLETED" %}Scan complete{% elif job.status == "FAILED" %}Scan stopped{% elif job.status == "QUEUED" %}Waiting to start{% else %}Scanning in progress{% endif %}
     </p>
 </div>

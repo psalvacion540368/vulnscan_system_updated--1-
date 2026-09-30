@@ -42,6 +42,10 @@ class UnauthorizedTargetError(Exception):
     """Raised when a requested target falls outside the configured allow-list."""
 
 
+class ScanScopeLimitError(UnauthorizedTargetError):
+    """Raised when a requested scan range is too large for a single job."""
+
+
 class ScanExecutionError(Exception):
     """Raised when Nmap/Scapy execution fails."""
 
@@ -139,6 +143,13 @@ def assert_authorized(raw_input: str):
         if not any(network.subnet_of(allowed) for allowed in allowed_networks):
             raise UnauthorizedTargetError(
                 f"{t} is outside the authorized scanning scope for this deployment."
+            )
+        max_addresses = settings.SCAN_MAX_TARGET_ADDRESSES
+        if network.num_addresses > max_addresses:
+            raise ScanScopeLimitError(
+                f"Target {network} contains {network.num_addresses:,} addresses; "
+                f"the limit for one scan is {max_addresses:,}. Use a smaller subnet "
+                f"(for example /24) or scan individual IP addresses."
             )
     return parsed
 
