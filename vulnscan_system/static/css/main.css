@@ -129,7 +129,6 @@ nav a, nav .link-button {
     transition: color 0.15s ease, background 0.15s ease;
 }
 nav a:hover, nav .link-button:hover { color: var(--text-bright); background: var(--panel-raised); }
-.sidebar nav a:first-child { border-left: 2px solid var(--signal); background: rgba(31, 224, 196, 0.06); }
 .inline-form { display: inline; }
 
 /* Layout */
