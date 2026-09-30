@@ -17,9 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # MySQL driver auto-selection: use mysqlclient if installed (preferred, faster);
-# otherwise fall back to PyMySQL transparently. This means either
-# `pip install mysqlclient` or `pip install pymysql` works with no further
-# settings.py changes needed.
+# otherwise fall back to PyMySQL transparently.
 try:
     import MySQLdb  # noqa: F401
 except ImportError:
@@ -36,7 +34,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ---------------------------------------------------------------------------
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "CHANGE-ME-IN-PRODUCTION")
 DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+
+# Allows Render domain, custom subdomains, and local dev hosts
+ALLOWED_HOSTS = os.environ.get(
+    "DJANGO_ALLOWED_HOSTS",
+    "vulnscans.onrender.com,vulnscan-system-updated-1-8.onrender.com,.onrender.com,127.0.0.1,localhost"
+).split(",")
 
 # ---------------------------------------------------------------------------
 # Applications
@@ -59,6 +62,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serves static files directly in production
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -106,7 +110,7 @@ DATABASES = {
         },
     }
 }
-# For quick local evaluation without MySQL installed, set VULNSCAN_USE_SQLITE=True
+# For quick local evaluation or cloud hosting without MySQL installed
 if os.environ.get("VULNSCAN_USE_SQLITE", "False") == "True":
     DATABASES["default"] = {
         "ENGINE": "django.db.backends.sqlite3",
@@ -149,9 +153,13 @@ TIME_ZONE = "Asia/Manila"
 USE_I18N = True
 USE_TZ = True
 
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# WhiteNoise storage driver for efficient production asset delivery
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"  # generated PDF/CSV reports land in media/reports/
@@ -165,20 +173,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SCAN_MAX_CONCURRENT_JOBS = int(os.environ.get("SCAN_MAX_CONCURRENT_JOBS", 2))
 SCAN_DEFAULT_TIMEOUT_SECONDS = int(os.environ.get("SCAN_DEFAULT_TIMEOUT_SECONDS", 600))
 SCAN_MAX_TARGET_ADDRESSES = max(1, int(os.environ.get("SCAN_MAX_TARGET_ADDRESSES", 256)))
-# Only these networks may be scanned -- authorization guardrail, edit for your environment.
 SCAN_ALLOWED_CIDRS = os.environ.get("SCAN_ALLOWED_CIDRS", "").split(",") if os.environ.get("SCAN_ALLOWED_CIDRS") else []
-# Only these hostnames/domains (and their subdomains) may be scanned as web targets.
-# Empty by default -- deny-all until explicitly opted in, since a domain can point
-# anywhere on the public internet, unlike a private CIDR range.
 SCAN_ALLOWED_DOMAINS = os.environ.get("SCAN_ALLOWED_DOMAINS", "").split(",") if os.environ.get("SCAN_ALLOWED_DOMAINS") else []
 NMAP_PATH = os.environ.get("NMAP_PATH", "/usr/bin/nmap")
 
 # Vulnerability correlation engine
 CVE_LOCAL_DB_PATH = BASE_DIR / "vulnassess" / "data" / "cve_local_db.json"
 NVD_API_BASE = "https://services.nvd.nist.gov/rest/json/cves/2.0"
-NVD_API_KEY = os.environ.get("NVD_API_KEY", "")  # optional; raises NVD rate limits
+NVD_API_KEY = os.environ.get("NVD_API_KEY", "")
 
-# Logging: authentication events, scan actions, and admin actions all logged.
+# Logging configuration
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

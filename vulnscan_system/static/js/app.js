@@ -5,6 +5,9 @@
         "(prefers-reduced-motion: reduce)"
     ).matches;
 
+    /* -------------------------------------------------------------------
+     * Auth Page Transitions
+     * ------------------------------------------------------------------- */
     document.querySelectorAll(".auth-transition").forEach((link) => {
         link.addEventListener("click", (event) => {
             if (prefersReducedMotion) return;
@@ -53,7 +56,9 @@
         });
     });
 
-    /* Sidebar active-link behavior */
+    /* -------------------------------------------------------------------
+     * Sidebar Active Link Navigation
+     * ------------------------------------------------------------------- */
     function initializeSidebarLinks() {
         const links = document.querySelectorAll(".sidebar nav a[href]");
         const normalizePath = (path) => path.replace(/\/+$/, "") || "/";
@@ -87,6 +92,9 @@
         initializeSidebarLinks();
     }
 
+    /* -------------------------------------------------------------------
+     * Auth Input Focus & Button Ripple Effects
+     * ------------------------------------------------------------------- */
     document.querySelectorAll(".auth-card input").forEach((input) => {
         input.addEventListener("focus", () => {
             input.closest("label")?.classList.add("is-focused");
@@ -115,6 +123,9 @@
         });
     });
 
+    /* -------------------------------------------------------------------
+     * Logout Particle Overlay Trigger
+     * ------------------------------------------------------------------- */
     document.querySelectorAll(".logout-trigger").forEach((button) => {
         button.closest("form")?.addEventListener("submit", (event) => {
             if (prefersReducedMotion || button.dataset.submitting === "true") return;
@@ -148,7 +159,9 @@
         });
     });
 
-    /* Mobile nav toggle */
+    /* -------------------------------------------------------------------
+     * Mobile Navigation Toggle
+     * ------------------------------------------------------------------- */
     const navToggle = document.querySelector(".nav-toggle");
     const nav = document.querySelector(".topbar nav");
 
@@ -159,7 +172,9 @@
         });
     }
 
-    /* Toast notifications */
+    /* -------------------------------------------------------------------
+     * Toast Notification Helper
+     * ------------------------------------------------------------------- */
     let toastContainer = document.getElementById("toast-container");
 
     if (!toastContainer) {
@@ -182,7 +197,9 @@
         }, timeout);
     };
 
-    /* Auto-dismiss server-rendered Django messages */
+    /* -------------------------------------------------------------------
+     * Auto-Dismiss Django Flash Messages
+     * ------------------------------------------------------------------- */
     document.querySelectorAll(".messages .message").forEach((msg) => {
         setTimeout(() => {
             if (prefersReducedMotion) {
@@ -198,7 +215,9 @@
         }, 6000);
     });
 
-    /* Stat value count-up */
+    /* -------------------------------------------------------------------
+     * Stat Counter Count-Up Animation
+     * ------------------------------------------------------------------- */
     function animateCountUp(el) {
         const target = parseFloat(el.dataset.countTo ?? el.textContent);
 
@@ -233,7 +252,9 @@
         .querySelectorAll(".stat-value[data-count-to]")
         .forEach(animateCountUp);
 
-    /* Live scan-status polling */
+    /* -------------------------------------------------------------------
+     * Live Scan Status Polling
+     * ------------------------------------------------------------------- */
     const statusRoot = document.getElementById("scan-status-root");
 
     if (statusRoot) {
